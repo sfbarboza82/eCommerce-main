@@ -1,0 +1,90 @@
+@inject Microsoft.AspNetCore.Identity.SignInManager<eCommerce.Models.Autenticacao.Usuario> SignInManager
+@inject Microsoft.AspNetCore.Identity.UserManager<eCommerce.Models.Autenticacao.Usuario> UserManager
+
+
+@model eCommerce.Models.ViewModels.RegistrarNovoUsuarioViewModel
+ 
+<div class="card-header text-white bg-secondary text-center h1">Registrar uma nova conta de usuário</div>
+<div class="row">
+    <div class="col-md-4">
+    </div>
+    <div class="col-md-4">
+        <form asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+            <div asp-validation-summary="All" class="text-danger">
+            </div>
+            <div class="form-group">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ConfirmPassword"></label>
+                <input asp-for="ConfirmPassword" class="form-control" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn    btn-default">Registrar</button>
+        </form>
+    </div>
+    <div class="col-md-4">
+    </div>
+</div>
+@section Scripts {
+@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+ [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegistrarNovoUsuario(RegistrarNovoUsuarioViewModel model, string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            if (ModelState.IsValid)
+            {
+                var user = new Usuario
+                {
+                    UserName = model.Email,
+                    Email = model.Email
+                };
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("Usuário criou uma nova conta com senha.");
+ 
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    _logger.LogInformation("Usuário acesso  com a   conta   criada.");
+ 
+                    return RedirectToLocal(returnUrl);
+                }
+                AddErrors(result);
+            }
+            return View(model);
+        }
+
+        private void AddErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+        private IActionResult RedirectToLocal(string returnUrl)
+        {
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            else
+            {
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+ 
+            }
+        }
+
+
+

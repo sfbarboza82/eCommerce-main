@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using eCommerce.Models.DataContext;
 using eCommerce.Models.Table;
 
+[Authorize]
+
 namespace eCommerce.Controllers
 {
     public class ClienteController : Controller
